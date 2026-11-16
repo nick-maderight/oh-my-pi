@@ -294,6 +294,16 @@ function modelDisplayName(ctx: SegmentContext): string {
 }
 
 /**
+ * Dim `<provider>/` mark before the model name, the form the model picker uses
+ * on its rows. A name such as "DeepSeek V4 Flash" then says which provider
+ * serves it. Empty when the session has no model (startup, test doubles).
+ */
+function modelProviderMark(ctx: SegmentContext): string {
+	const provider = ctx.session.state.model?.provider;
+	return provider ? theme.fg("dim", `${provider}/`) : "";
+}
+
+/**
  * The thinking-effort word (`high`, `off`; `auto` until auto thinking resolves
  * a level), or undefined when the model has no thinking. Drives the native
  * model segment and the composer's effort chip.
@@ -377,7 +387,9 @@ const modelSegment: StatusLineSegment = {
 
 		// `statusLineModel` is aliased to `accent` in many themes, so the badge
 		// uses status colors to stay visibly distinct from the model name color.
-		let content = accentFg(ctx, "statusLineModel", withIcon(modelIcon, modelName));
+		// The provider mark stays dim and concatenated, so each span keeps its
+		// own reset.
+		let content = `${accentFg(ctx, "statusLineModel", modelIcon ? `${modelIcon} ` : "")}${modelProviderMark(ctx)}${accentFg(ctx, "statusLineModel", modelName)}`;
 		// Per-advisor detail lives in `/advisor status`.
 		const advisor = modelAdvisorBadge(ctx);
 		if (advisor) content += theme.fg(advisor.color, ` ${advisor.icon}`);
@@ -392,10 +404,13 @@ const modelSegment: StatusLineSegment = {
 		return { content, visible: true };
 	},
 	describe(ctx) {
-		// Name, then the thinking level as a word in its level colour after a
-		// quiet separator; the terminal draws the model icon.
+		// The provider mark, then the name, then the thinking level as a word in
+		// its level colour after a quiet separator; the terminal draws the model
+		// icon.
 		const token = accentToken(ctx, "statusLineModel");
-		const spans: TspSpan[] = [span(modelDisplayName(ctx), token)];
+		const provider = ctx.session.state.model?.provider;
+		const name = span(modelDisplayName(ctx), token);
+		const spans: TspSpan[] = provider ? [span(`${provider}/`, "dim"), name] : [name];
 		const advisor = modelAdvisorBadge(ctx);
 		if (advisor) spans.push(span(` ${advisor.icon}`, advisor.color));
 		if (ctx.session.isFastModeActive() && theme.icon.fast) spans.push(span(` ${theme.icon.fast}`, token));

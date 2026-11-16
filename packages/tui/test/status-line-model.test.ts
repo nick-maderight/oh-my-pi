@@ -1,7 +1,8 @@
 import { beforeAll, describe, expect, it } from "bun:test";
 import { ThinkingLevel } from "@oh-my-pi/pi-agent-core";
 import type { SegmentContext } from "../src/status-line/segments";
-import { renderSegment } from "../src/status-line/segments";
+import { renderSegment, SEGMENTS } from "../src/status-line/segments";
+import { span } from "../src/native/describe";
 import { initTheme, theme } from "../src/theme";
 
 beforeAll(async () => {
@@ -136,6 +137,38 @@ describe("status line model segment advisor badge", () => {
 		const rendered = renderSegment("model", createModelContext(false));
 		expect(rendered.content).toContain("Test Model");
 		expect(rendered.content).not.toContain(theme.icon.advisor);
+	});
+});
+
+describe("status line model segment provider mark", () => {
+	function createProviderContext(provider?: string): SegmentContext {
+		const base = createModelContext(false);
+		return {
+			...base,
+			session: {
+				...base.session,
+				state: { model: { id: "test-model", name: "Test Model", provider } },
+			} as unknown as SegmentContext["session"],
+		};
+	}
+
+	it("marks the serving provider before the name", () => {
+		const modelPrefix = theme.icon.model ? `${theme.icon.model} ` : "";
+		const rendered = renderSegment("model", createProviderContext("commandcode"));
+		expect(Bun.stripANSI(rendered.content)).toBe(`${modelPrefix}commandcode/Test Model`);
+		expect(rendered.content).toContain(theme.fg("dim", "commandcode/"));
+		expect(SEGMENTS.model.describe?.(createProviderContext("commandcode"))?.spans[0]).toEqual(
+			span("commandcode/", "dim"),
+		);
+	});
+
+	it("drops the mark when the session has no provider", () => {
+		const modelPrefix = theme.icon.model ? `${theme.icon.model} ` : "";
+		const rendered = renderSegment("model", createProviderContext());
+		expect(Bun.stripANSI(rendered.content)).toBe(`${modelPrefix}Test Model`);
+		expect(SEGMENTS.model.describe?.(createProviderContext())?.spans).toEqual([
+			span("Test Model", "statusLineModel"),
+		]);
 	});
 });
 

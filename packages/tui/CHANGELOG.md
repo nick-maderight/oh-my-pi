@@ -76,6 +76,9 @@
 - Images in Ask forms now render correctly in Kitty-protocol terminals, including Kitty, Ghostty, and herdr.
 - Fixed model mentions followed by punctuation so they become editable chips without consuming the punctuation.
 - Fixed /copy to copy the visible prose from mid-turn out:// replies, including replies sent by commands, instead of the tool's internal result text.
+### Added
+
+- Added the serving provider to the status line's `model` segment as a dim `provider/` mark before the model name, matching how the model picker labels its rows.
 
 ## [18.22.0] - 2026-11-16
 

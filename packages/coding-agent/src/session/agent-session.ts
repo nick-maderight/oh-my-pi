@@ -2736,6 +2736,7 @@ export class AgentSession implements SettingsScope, AgentViewSession {
 			ruleJudge: () => this.ruleJudge(),
 			deliverRuleWarning: (content, ruleNames) => this.#deliverRuleWarning(content, ruleNames),
 			sessionGeneration: () => this.#sessionGeneration,
+			isSubagent: () => this.#agentKind === "sub",
 		};
 		this.#ttsr = new TtsrCoordinator(ttsrHost, config.ttsrManager);
 		this.#extensionRunner?.setToolCallPreflight?.({

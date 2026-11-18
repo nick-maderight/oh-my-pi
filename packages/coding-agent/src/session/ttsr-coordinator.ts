@@ -70,6 +70,8 @@ export interface TtsrCoordinatorHost {
 	deliverRuleWarning(content: string, ruleNames: string[]): Promise<void>;
 	/** Changes when the session is replaced; verdicts from an older generation are dropped. */
 	sessionGeneration(): number;
+	/** Whether this session is a subagent, whose report reaches its parent as the task result. */
+	isSubagent?(): boolean;
 }
 
 /** Coordinates TTSR stream matching, interruption, injection, and resume gates. */
@@ -518,6 +520,13 @@ export class TtsrCoordinator {
 		if (message.stopReason === "aborted" || message.stopReason === "error") this.#perToolInjections.clear();
 		if (this.#abortPending || this.#pendingInjections.length === 0) return;
 		if (message.stopReason === "aborted" || message.stopReason === "error") {
+			this.#pendingInjections = [];
+			this.#pendingExcerpts = {};
+			return;
+		}
+		// A subagent's final report is its task result. A queued reminder opens
+		// another turn. The reply to that turn replaces the report its parent reads.
+		if (this.#host.isSubagent?.()) {
 			this.#pendingInjections = [];
 			this.#pendingExcerpts = {};
 			return;

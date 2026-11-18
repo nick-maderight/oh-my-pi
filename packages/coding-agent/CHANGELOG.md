@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed a TTSR reminder queued by a rule set to `interruptMode: never` firing after a subagent's final report and replacing the report its parent received
+
 ## [18.22.2] - 2026-11-18
 
 ### Added
